@@ -1,0 +1,707 @@
+// ===== PACKAGE.JSON =====
+{
+  "name": "fidigital-landing",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.13.1",
+    "lucide-react": "^0.453.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.17",
+    "typescript": "5.6.3",
+    "vite": "^5.4.19",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1"
+  }
+}
+
+// ===== INDEX.HTML =====
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIdigital - Fitness Marketing Agency</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+// ===== TAILWIND.CONFIG.JS =====
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: "#3B82F6",
+        charcoal: "#3C3C43",
+        "dark-charcoal": "#1A1A1E",
+        "accent-red": "#EF4444"
+      }
+    },
+  },
+  plugins: [],
+}
+
+// ===== SRC/INDEX.CSS =====
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #3B82F6;
+  --charcoal: #3C3C43;
+  --dark-charcoal: #1A1A1E;
+  --accent-red: #EF4444;
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .text-charcoal {
+    color: var(--charcoal);
+  }
+  
+  .text-dark-charcoal {
+    color: var(--dark-charcoal);
+  }
+  
+  .bg-charcoal {
+    background-color: var(--charcoal);
+  }
+  
+  .bg-dark-charcoal {
+    background-color: var(--dark-charcoal);
+  }
+  
+  .border-charcoal {
+    border-color: var(--charcoal);
+  }
+  
+  .border-dark-charcoal {
+    border-color: var(--dark-charcoal);
+  }
+  
+  .text-accent-red {
+    color: var(--accent-red);
+  }
+  
+  .bg-accent-red {
+    background-color: var(--accent-red);
+  }
+  
+  .border-accent-red {
+    border-color: var(--accent-red);
+  }
+}
+
+// ===== SRC/MAIN.TSX =====
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+// ===== SRC/APP.TSX =====
+import { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
+import { cn } from './lib/utils';
+
+// Button Component
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'ghost';
+  size?: 'default' | 'sm';
+}
+
+const Button = ({ className, variant = 'default', size = 'default', ...props }: ButtonProps) => {
+  return (
+    <button
+      className={cn(
+        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background",
+        {
+          "bg-primary text-white hover:bg-primary/90": variant === 'default',
+          "hover:bg-accent hover:text-accent-foreground": variant === 'ghost',
+          "h-10 py-2 px-4": size === 'default',
+          "h-9 px-3": size === 'sm',
+        },
+        className
+      )}
+      {...props}
+    />
+  );
+};
+
+// Animated Counter Component
+interface AnimatedCounterProps {
+  value: number;
+  suffix?: string;
+  duration?: number;
+}
+
+const AnimatedCounter = ({ value, suffix = "", duration = 2 }: AnimatedCounterProps) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (isInView) {
+      let startTime: number | null = null;
+      const startValue = 0;
+      const endValue = value;
+
+      const updateCounter = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+        
+        const currentValue = Math.floor(progress * (endValue - startValue) + startValue);
+        setCount(currentValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(updateCounter);
+        }
+      };
+
+      requestAnimationFrame(updateCounter);
+    }
+  }, [isInView, value, duration]);
+
+  return (
+    <motion.span
+      ref={ref}
+      initial={{ scale: 0.5, opacity: 0 }}
+      animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {count}{suffix}
+    </motion.span>
+  );
+};
+
+// Header Component
+const Header = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const scrollToCTA = () => {
+    const ctaSection = document.getElementById('final-cta');
+    if (ctaSection) {
+      ctaSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <nav className="sticky top-0 z-50 bg-white border-b-4 border-primary shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="text-2xl font-black text-primary tracking-tight">
+              FI<span className="text-charcoal">digital</span>
+            </div>
+          </div>
+          
+          <div className="hidden md:block">
+            <Button 
+              onClick={scrollToCTA}
+              className="bg-accent-red hover:bg-red-600 text-white font-bold py-3 px-8 border-2 border-accent-red hover:border-red-600 transition-all duration-200 hover:scale-105 rounded-none"
+            >
+              GET IN CONTACT
+            </Button>
+          </div>
+
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 text-charcoal" />
+              ) : (
+                <Menu className="h-6 w-6 text-charcoal" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t-2 border-primary bg-white py-4">
+            <Button 
+              onClick={() => {
+                scrollToCTA();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full bg-accent-red hover:bg-red-600 text-white font-bold py-3 px-8 border-2 border-accent-red hover:border-red-600 transition-all duration-200 rounded-none"
+            >
+              GET IN CONTACT
+            </Button>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+// Hero Section
+const HeroSection = () => {
+  const scrollToCTA = () => {
+    const ctaSection = document.getElementById('final-cta');
+    if (ctaSection) {
+      ctaSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <section className="bg-white py-20 lg:py-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h1 className="text-5xl lg:text-7xl font-black text-dark-charcoal leading-tight mb-8">
+            Your Dream Clients Are
+            <span className="text-primary"> Scrolling Past You</span>
+          </h1>
+          <p className="text-xl lg:text-2xl font-light text-charcoal max-w-4xl mx-auto mb-12 leading-relaxed">
+            Let's fix that. We build conversion machines that turn your fitness expertise into consistent revenue.
+          </p>
+          <Button 
+            onClick={scrollToCTA}
+            className="bg-accent-red hover:bg-red-600 text-white font-black text-xl py-6 px-12 border-4 border-accent-red hover:border-red-600 transition-all duration-200 hover:scale-105 shadow-2xl rounded-none"
+          >
+            STOP LOSING MONEY ONLINE
+          </Button>
+        </motion.div>
+        
+        <motion.div 
+          className="mt-20 flex justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        >
+          <div className="w-32 h-2 bg-primary"></div>
+          <div className="w-8 h-8 bg-accent-red transform rotate-45 -mt-3 mx-4"></div>
+          <div className="w-32 h-2 bg-primary"></div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// Problem Section
+const ProblemSection = () => {
+  const problems = [
+    {
+      number: "01",
+      title: "Great IG, Zero Funnel",
+      description: "You post daily, get likes, but followers aren't becoming paying clients. Your content game is strong but your conversion system is broken."
+    },
+    {
+      number: "02", 
+      title: "Manual Booking Nightmare",
+      description: "DMs, phone calls, back-and-forth scheduling. You're spending more time booking clients than training them."
+    },
+    {
+      number: "03",
+      title: "Feast or Famine Revenue", 
+      description: "Some months you're booked solid, others you're scrambling for clients. No predictable system means no predictable income."
+    }
+  ];
+
+  return (
+    <section className="bg-gray-50 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-4xl lg:text-6xl font-black text-dark-charcoal mb-6">
+            Sound <span className="text-accent-red">Familiar?</span>
+          </h2>
+        </motion.div>
+        
+        <div className="grid lg:grid-cols-3 gap-8">
+          {problems.map((problem, index) => (
+            <motion.div
+              key={problem.number}
+              className="bg-white border-4 border-charcoal p-8 hover:border-primary transition-all duration-300 hover:scale-105 cursor-pointer"
+              initial={{ opacity: 0, x: index === 0 ? -50 : index === 2 ? 50 : 0, y: index === 1 ? 50 : 0 }}
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: index * 0.2, ease: "easeOut" }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="text-6xl font-black text-accent-red mb-4">{problem.number}</div>
+              <h3 className="text-2xl font-black text-dark-charcoal mb-4">{problem.title}</h3>
+              <p className="text-charcoal font-medium leading-relaxed">
+                {problem.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Solution Section
+const SolutionSection = () => {
+  const solutions = [
+    {
+      number: 1,
+      title: "Sales-Focused Website",
+      description: "Not just pretty—built to convert visitors into leads with strategic copy, clear CTAs, and conversion optimization."
+    },
+    {
+      number: 2,
+      title: "Intelligent Booking System", 
+      description: "Automated scheduling that captures leads, qualifies prospects, and books calls without you lifting a finger."
+    },
+    {
+      number: 3,
+      title: "Branded Sales Pages That Sell",
+      description: "High-converting landing pages for each service that speak your prospect's language and drive action."
+    },
+    {
+      number: 4,
+      title: "Email Funnels That Convert",
+      description: "Automated sequences that nurture leads, build trust, and turn prospects into paying clients while you sleep."
+    },
+    {
+      number: 5,
+      title: "VSL Script & Lead Magnet Setup",
+      description: "Professional video sales letters and irresistible lead magnets that capture attention and generate qualified leads."
+    }
+  ];
+
+  return (
+    <section className="bg-white py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-4xl lg:text-6xl font-black text-dark-charcoal mb-6">
+            Here's How We <span className="text-primary">Fix It</span>
+          </h2>
+        </motion.div>
+        
+        <div className="max-w-4xl mx-auto">
+          {solutions.map((solution, index) => (
+            <div key={solution.number}>
+              <motion.div 
+                className="flex items-start mb-12"
+                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
+              >
+                <div className="bg-primary text-white text-2xl font-black w-16 h-16 flex items-center justify-center mr-8 flex-shrink-0">
+                  {solution.number}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-black text-dark-charcoal mb-3">{solution.title}</h3>
+                  <p className="text-charcoal font-medium text-lg leading-relaxed">
+                    {solution.description}
+                  </p>
+                </div>
+              </motion.div>
+              
+              {index < solutions.length - 1 && (
+                <div className="flex justify-center mb-12">
+                  <div className="w-24 h-1 bg-charcoal"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Proof Section
+const ProofSection = () => {
+  const stats = [
+    {
+      value: 2,
+      suffix: "x",
+      title: "Signups in 3 Weeks",
+      description: "Average client increase after implementing our conversion system"
+    },
+    {
+      value: 85,
+      suffix: "%", 
+      title: "Higher Conversion",
+      description: "Our funnels convert visitors to leads at industry-leading rates"
+    },
+    {
+      value: 20,
+      suffix: "+",
+      title: "Funnels Built",
+      description: "Proven systems deployed for fitness professionals nationwide"
+    }
+  ];
+
+  return (
+    <section className="bg-primary py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-4xl lg:text-6xl font-black text-white mb-6">
+            Results That <span className="text-yellow-400">Speak</span>
+          </h2>
+        </motion.div>
+        
+        <div className="grid lg:grid-cols-3 gap-8 text-center">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              className="bg-white border-4 border-white p-8"
+              initial={{ opacity: 0, scale: 0.5 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
+            >
+              <div className="text-5xl lg:text-6xl font-black text-accent-red mb-4">
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+              </div>
+              <h3 className="text-xl font-black text-dark-charcoal mb-2">{stat.title}</h3>
+              <p className="text-charcoal font-medium">{stat.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// How It Works Section
+const HowItWorksSection = () => {
+  const steps = [
+    {
+      number: 1,
+      title: "You Tell Us What You Offer",
+      description: "Share your services, target clients, and current challenges. We analyze your market position and identify conversion opportunities."
+    },
+    {
+      number: 2,
+      title: "We Build Your Conversion Engine", 
+      description: "Our team creates your complete system: website, funnels, booking automation, and email sequences—all optimized for your specific market."
+    },
+    {
+      number: 3,
+      title: "You Only Pay If You Love It",
+      description: "We deliver results first. If you're not completely satisfied with your conversion system, you don't pay. Period."
+    }
+  ];
+
+  return (
+    <section className="bg-gray-50 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-4xl lg:text-6xl font-black text-dark-charcoal mb-6">
+            How It <span className="text-primary">Works</span>
+          </h2>
+        </motion.div>
+        
+        <div className="max-w-5xl mx-auto">
+          {steps.map((step, index) => (
+            <div key={step.number}>
+              <motion.div 
+                className={`flex flex-col lg:flex-row items-center mb-16 ${
+                  index % 2 === 1 ? 'lg:flex-row-reverse' : ''
+                }`}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.2, ease: "easeOut" }}
+              >
+                <div className="bg-accent-red text-white text-6xl lg:text-8xl font-black w-32 h-32 lg:w-40 lg:h-40 flex items-center justify-center mb-8 lg:mb-0 lg:mx-12 flex-shrink-0">
+                  {step.number}
+                </div>
+                <div className={`text-center ${index % 2 === 1 ? 'lg:text-right' : 'lg:text-left'}`}>
+                  <h3 className="text-3xl lg:text-4xl font-black text-dark-charcoal mb-4">{step.title}</h3>
+                  <p className="text-xl text-charcoal font-medium leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </motion.div>
+
+              {index < steps.length - 1 && (
+                <div className="flex justify-center mb-16">
+                  <div className="w-8 h-16 bg-primary transform rotate-45"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Final CTA Section
+const FinalCTASection = () => {
+  const handleStrategyCall = () => {
+    window.open('tel:+1234567890', '_blank');
+  };
+
+  const handleDemoFunnel = () => {
+    window.open('mailto:demo@fidigital.com?subject=Free Demo Funnel Request', '_blank');
+  };
+
+  return (
+    <section id="final-cta" className="bg-white py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-4xl lg:text-6xl font-black text-dark-charcoal mb-8">
+            Ready to Stop Guessing and <span className="text-primary">Start Converting?</span>
+          </h2>
+          <p className="text-xl lg:text-2xl font-light text-charcoal max-w-4xl mx-auto mb-12 leading-relaxed">
+            Your expertise deserves a system that works as hard as you do.
+          </p>
+          
+          <div className="flex flex-col lg:flex-row gap-6 justify-center items-center">
+            <Button 
+              onClick={handleStrategyCall}
+              className="bg-primary hover:bg-blue-800 text-white font-black text-xl py-6 px-10 border-4 border-primary hover:border-blue-800 transition-all duration-200 hover:scale-105 shadow-xl rounded-none"
+            >
+              BOOK A FREE STRATEGY CALL
+            </Button>
+            <Button 
+              onClick={handleDemoFunnel}
+              className="bg-white hover:bg-gray-100 text-dark-charcoal font-black text-xl py-6 px-10 border-4 border-dark-charcoal hover:border-charcoal transition-all duration-200 hover:scale-105 shadow-xl rounded-none"
+            >
+              GET YOUR FREE DEMO FUNNEL
+            </Button>
+          </div>
+        </motion.div>
+        
+        <motion.div 
+          className="mt-20 flex justify-center"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5, ease: "easeOut" }}
+        >
+          <div className="w-20 h-20 bg-accent-red transform rotate-45"></div>
+          <div className="w-4 h-4 bg-primary transform rotate-45 mt-8 mx-8"></div>
+          <div className="w-20 h-20 bg-primary transform rotate-45"></div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// Footer
+const Footer = () => {
+  return (
+    <footer className="bg-dark-charcoal text-white py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="text-2xl font-black text-primary mb-4">
+          FI<span className="text-white">digital</span>
+        </div>
+        <p className="text-gray-400">© 2024 FIdigital</p>
+      </div>
+    </footer>
+  );
+};
+
+// Utils
+export function cn(...inputs: (string | undefined)[]): string {
+  return inputs.filter(Boolean).join(' ');
+}
+
+// Main App
+function App() {
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      <HeroSection />
+      <ProblemSection />
+      <SolutionSection />
+      <ProofSection />
+      <HowItWorksSection />
+      <FinalCTASection />
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
+
+// ===== SRC/LIB/UTILS.TS =====
+export function cn(...inputs: (string | undefined)[]): string {
+  return inputs.filter(Boolean).join(' ');
+}
+
+// ===== VITE.CONFIG.TS =====
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+
+// ===== POSTCSS.CONFIG.JS =====
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
